@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 
 class Seel{
@@ -79,8 +80,8 @@ class Seel{
 
 
         List<string> browserPaths = new List<string>();
-        browserPaths.Add(getChromePath());
-        browserPaths.Add(getEdgePath());
+        browserPaths.Add(GetChromePath());
+        browserPaths.Add(GetEdgePath());
 
         foreach(string browserPath in browserPaths){
             if(browserPath != null){
@@ -91,9 +92,10 @@ class Seel{
         
         process.StartInfo = startInfo;
         process.Start();
+        process.Close();
     }
 
-    private static string getChromePath(){
+    private static string GetChromePath(){
         string path = Microsoft.Win32.Registry.GetValue(@"HKEY_CLASSES_ROOT\ChromeHTML\shell\open\command", null, null) as string;
         if (path != null){
             string[] split = path.Split('\"');
@@ -102,11 +104,25 @@ class Seel{
         return path;
     }
 
-    private static string getEdgePath(){
-        return "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
+    private static string GetEdgePath(){
+        string path = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
+        if(File.Exists(path)){
+            return path;
+        }else{
+            return null;
+        }
     }
 
     public static void Main(string[] args){
+        // hide window of current process
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetConsoleWindow();
+        [DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        const int SW_HIDE = 0;
+        var handle = GetConsoleWindow();
+        ShowWindow(handle, SW_HIDE);
+
         string pathToExecutable = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         string path = $"{pathToExecutable}/index.html";
 
